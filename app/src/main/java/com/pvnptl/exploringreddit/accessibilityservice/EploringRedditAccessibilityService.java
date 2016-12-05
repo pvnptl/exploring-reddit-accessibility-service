@@ -22,6 +22,9 @@ public class EploringRedditAccessibilityService extends AccessibilityService {
     private static final int EVENT_NOTIFICATION_TIMEOUT_MILLIS = 0;
 
     private static final String CLASS_NAME_EDIT_TEXT = "android.widget.EditText";
+    private static final String CLASS_NAME_VIEW = "android.view.View";
+    private static final String CLASS_NAME_FRAME_LAYOUT = "android.view.View";
+    private static final String CLASS_NAME_WEB_VIEW = "android.webkit.WebView";
 
     private static final String[] PACKAGE_NAMES = new String[]{
             "com.android.chrome",     // for chrome application
@@ -72,12 +75,17 @@ public class EploringRedditAccessibilityService extends AccessibilityService {
             return;
         }
 
-        if (CLASS_NAME_EDIT_TEXT.equals(info.getClassName())) {
+        if (CLASS_NAME_WEB_VIEW.equals(info.getClassName())) {
+            // Do not traverse webview
+            return;
+        } else if (CLASS_NAME_EDIT_TEXT.equals(info.getClassName())) {
             String nodeText = info.getText().toString();
 
             Uri uri = Uri.parse(nodeText);
 
             List<String> pathSegments = uri.getPathSegments();
+
+            AccessibilityNodeInfo parent = info.getParent();
 
             // Supporting https://m.reddit.com/r/pics/<any random string>
             // Supporting https://www.reddit.com/r/pics/<any random string>
@@ -90,6 +98,7 @@ public class EploringRedditAccessibilityService extends AccessibilityService {
                 handleRedditUrl(info, nodeText, pathSegments.get(1));
                 return;
             }
+
             mHandler.obtainMessage(CLEAR_NOTIFICATION).sendToTarget();
             return;
         }
