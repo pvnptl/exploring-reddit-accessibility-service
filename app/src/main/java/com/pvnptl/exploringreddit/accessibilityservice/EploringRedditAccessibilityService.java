@@ -80,10 +80,11 @@ public class EploringRedditAccessibilityService extends AccessibilityService {
             List<String> pathSegments = uri.getPathSegments();
 
             // Supporting https://m.reddit.com/r/pics/<any random string>
+            // Supporting https://www.reddit.com/r/pics/<any random string>
             if (uri.getScheme() != null
                     && uri.getScheme().equalsIgnoreCase("https")
                     && uri.getHost() != null
-                    && uri.getHost().equalsIgnoreCase("m.reddit.com")
+                    && (uri.getHost().equalsIgnoreCase("m.reddit.com") || uri.getHost().equalsIgnoreCase("www.reddit.com"))
                     && pathSegments.size() >= 2
                     && isSubSupported(pathSegments.get(0), pathSegments.get(1))) {
                 handleRedditUrl(info, nodeText, pathSegments.get(1));
