@@ -24,8 +24,8 @@ public class EploringRedditAccessibilityService extends AccessibilityService {
     private static final String CLASS_NAME_EDIT_TEXT = "android.widget.EditText";
 
     private static final String[] PACKAGE_NAMES = new String[]{
-            "com.android.chrome",
-            "com.android.launcher3"
+            "com.android.chrome",     // for chrome application
+            "com.android.launcher3"  // For home button press
     };
 
     private static final String[] SUPPORTED_SUB_NAMES = new String[]{
@@ -46,11 +46,19 @@ public class EploringRedditAccessibilityService extends AccessibilityService {
         AccessibilityNodeInfo source = event.getSource();
         if (source != null) {
             if (source.getPackageName().toString().equalsIgnoreCase("com.android.launcher3")) {
-                mHandler.obtainMessage(CLEAR_NOTIFICATION).sendToTarget();
+                handleLauncherApplication();
             } else if (source.getPackageName().toString().equalsIgnoreCase("com.android.chrome")) {
-                depthFirstSearch(source);
+                handleChomeApplication(source);
             }
         }
+    }
+
+    private void handleLauncherApplication() {
+        mHandler.obtainMessage(CLEAR_NOTIFICATION).sendToTarget();
+    }
+
+    private void handleChomeApplication(AccessibilityNodeInfo source) {
+        depthFirstSearch(source);
     }
 
     @Override
@@ -71,6 +79,7 @@ public class EploringRedditAccessibilityService extends AccessibilityService {
 
             List<String> pathSegments = uri.getPathSegments();
 
+            // Supporting https://m.reddit.com/r/pics/<any random string>
             if (uri.getScheme() != null
                     && uri.getScheme().equalsIgnoreCase("https")
                     && uri.getHost() != null
