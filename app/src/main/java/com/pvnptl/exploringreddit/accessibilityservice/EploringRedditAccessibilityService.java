@@ -5,8 +5,6 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
-import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
@@ -47,11 +45,11 @@ public class EploringRedditAccessibilityService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         AccessibilityNodeInfo source = event.getSource();
-        if (source != null) {
+        if (source != null && source.getPackageName() != null) {
             if (source.getPackageName().toString().equalsIgnoreCase("com.android.launcher3")) {
                 handleLauncherApplication();
             } else if (source.getPackageName().toString().equalsIgnoreCase("com.android.chrome")) {
-                handleChomeApplication(source);
+                handleChromeApplication(source);
             }
         }
     }
@@ -60,7 +58,7 @@ public class EploringRedditAccessibilityService extends AccessibilityService {
         mHandler.obtainMessage(CLEAR_NOTIFICATION).sendToTarget();
     }
 
-    private void handleChomeApplication(AccessibilityNodeInfo source) {
+    private void handleChromeApplication(AccessibilityNodeInfo source) {
         depthFirstSearch(source);
     }
 
@@ -75,17 +73,23 @@ public class EploringRedditAccessibilityService extends AccessibilityService {
             return;
         }
 
-        if (CLASS_NAME_WEB_VIEW.equals(info.getClassName())) {
-            // Do not traverse webview
+        AccessibilityNodeInfo parent = info.getParent();
+
+        if (CLASS_NAME_WEB_VIEW.equalsIgnoreCase(info.getClassName().toString())
+                || CLASS_NAME_VIEW.equalsIgnoreCase(info.getClassName().toString())) {
+            // Do not traverse webview and view
             return;
-        } else if (CLASS_NAME_EDIT_TEXT.equals(info.getClassName())) {
+        } else if (CLASS_NAME_EDIT_TEXT.equalsIgnoreCase(info.getClassName().toString())
+                && (parent == null
+                || !CLASS_NAME_VIEW.equalsIgnoreCase(parent.getClassName().toString()))) {
+            // ignore events from webview edit text, parent for such view is View class
+            // parent would return null for case when tab button clicked in chrome
+
             String nodeText = info.getText().toString();
 
             Uri uri = Uri.parse(nodeText);
 
             List<String> pathSegments = uri.getPathSegments();
-
-            AccessibilityNodeInfo parent = info.getParent();
 
             // Supporting https://m.reddit.com/r/pics/<any random string>
             // Supporting https://www.reddit.com/r/pics/<any random string>
@@ -100,6 +104,7 @@ public class EploringRedditAccessibilityService extends AccessibilityService {
             }
 
             mHandler.obtainMessage(CLEAR_NOTIFICATION).sendToTarget();
+
             return;
         }
         for (int i = 0; i < info.getChildCount(); i++) {
