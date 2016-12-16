@@ -54,6 +54,7 @@ public class Notifier {
                     intent.setComponent(new ComponentName("com.pvnptl.exploringreddit", "com.pvnptl.exploringreddit.activity.HomeActivity"));
                     intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     intent.putExtra("subredditname", subName);
+                    intent.setAction("android.intent.action.NOTIFICATION");
                     contentIntent = PendingIntent.getActivity(context, TYPE_EXPLORING_REDDIT_SERVICE_RUNNING, intent, PendingIntent.FLAG_UPDATE_CURRENT);
                     break;
             }
